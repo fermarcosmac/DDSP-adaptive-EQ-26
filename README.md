@@ -3,7 +3,7 @@
 Code accompanying the paper submitted to DAFx26:
 
 > **A DDSP Framework for Adaptive Room Equalization**  
-> Fernando Marcos-Martínez
+> Fernando Marcos-Macías
 
 ---
 
@@ -140,7 +140,7 @@ Each experiment is controlled by a JSON config file in `configs/`. Key fields:
 ```bibtex
 @inproceedings{marcos2026ddsp,
   title     = {A {DDSP} Framework for Adaptive Room Equalization},
-  author    = {Marcos-Mart{\'{i}}nez, Fernando},
+  author    = {Marcos-Mac{\'{i}}as, Fernando},
   booktitle = {Proceedings of the 27th International Conference on Digital Audio Effects (DAFx26)},
   year      = {2026}
 }
