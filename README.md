@@ -1,1 +1,1 @@
-# GHAM-adaptive-paramEQ
+# DDSP-adaptive-EQ-26
