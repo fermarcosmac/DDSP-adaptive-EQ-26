@@ -1,0 +1,68 @@
+{
+  "experiment_name": "ablation_study",
+  "seed": 124,
+  "scenario": "moving_position",
+  "shared_simulation_params": {
+    "ROI": [
+      [50.0, 20000.0]
+    ],
+    "frame_len": [8192],
+    "hop_len": [8192],
+    "forget_factor": [0.05],
+    "target_response_type": ["delay_and_mag"],
+    "n_rirs": [8],
+    "transition_time_s": [1.0]
+  },
+  "proposed_configs": [
+    {
+      "label": "SGD_FD",
+      "optim_type": "SGD",
+      "loss_type": "FD-MSE",
+      "mu_opt": 0.005,
+      "lambda_newton": 1000.0,
+      "eps_0": 1.0,
+      "use_true_LEM": false,
+      "n_checkpoints": 0
+    },
+    {
+      "label": "SGD_FD_trueLEM",
+      "optim_type": "SGD",
+      "loss_type": "FD-MSE",
+      "mu_opt": 0.005,
+      "lambda_newton": 1000.0,
+      "eps_0": 1.0,
+      "use_true_LEM": true,
+      "n_checkpoints": 0
+    },
+    {
+      "label": "GHAM1_FD",
+      "optim_type": "GHAM-1",
+      "loss_type": "FD-MSE",
+      "mu_opt": 0.5,
+      "lambda_newton": 1000.0,
+      "eps_0": 1.0,
+      "use_true_LEM": false,
+      "n_checkpoints": 0
+    }
+  ],
+  "fir_baselines": {
+    "FxLMS": {
+      "enabled": true,
+      "mu": 0.001,
+      "filter_len": 2048,
+      "primary_path_ir_len": 20000
+    },
+    "FxFDAF": {
+      "enabled": true,
+      "mu": 0.005,
+      "beta": 0.8,
+      "filter_len": 2048
+    }
+  },
+  "input": {
+    "use_white_noise": false,
+    "use_songs_folder": true,
+    "max_num_songs": 12,
+    "max_audio_len_s": [180.0]
+  }
+}

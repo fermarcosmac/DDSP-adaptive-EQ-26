@@ -1,16 +1,31 @@
-# Ignore everything inside these directories
+# Data directories (large files, not tracked)
 data/SoundCam/*
 data/MedleyDB/*
 data/audio/output/*
-.vscode/*
-
-# Ignore all png images
-*.png
-
-# Except this file
 !data/SoundCam/.gitkeep
 !data/MedleyDB/.gitkeep
 !data/audio/output/.gitkeep
 
+# Experiment results (auto-generated)
+results/*/plot_data.pkl
+results/*/metrics.csv
+results/*/*.png
+
 # Python bytecode caches
 __pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Editor / OS files
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

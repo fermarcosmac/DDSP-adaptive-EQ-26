@@ -1,0 +1,34 @@
+{
+  "experiment_name": "main_experiment",
+  "seed": 124,
+  "scenario": "moving_position",
+  "simulation_params": {
+    "ROI": [
+      [50.0, 20000.0]
+    ],
+    "frame_len": [8192],
+    "forget_factor": [0.05],
+    "target_response_type": ["delay_and_mag"],
+    "n_rirs": [8],
+    "transition_time_s": [1.0, 3.0],
+    "loss_type": ["FD-MSE"],
+    "optim_type": ["SGD", "GHAM-1", "GHAM-2", "GHAM-3", "GHAM-4", "Newton"],
+    "mu_opt": {
+      "FD-MSE": [0.005, 0.5, 0.5, 0.5, 0.5, 1.0]
+    },
+    "lambda_newton": {
+      "FD-MSE": [1000.0]
+    },
+    "eps_0": {
+      "FD-MSE": [1.0]
+    },
+    "use_true_LEM": [false],
+    "n_checkpoints": [0]
+  },
+  "input": {
+    "use_white_noise": false,
+    "use_songs_folder": true,
+    "max_num_songs": 12,
+    "max_audio_len_s": [180.0]
+  }
+}
