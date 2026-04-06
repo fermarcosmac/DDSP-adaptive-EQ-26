@@ -1,0 +1,16 @@
+# Ignore everything inside these directories
+data/SoundCam/*
+data/MedleyDB/*
+data/audio/output/*
+.vscode/*
+
+# Ignore all png images
+*.png
+
+# Except this file
+!data/SoundCam/.gitkeep
+!data/MedleyDB/.gitkeep
+!data/audio/output/.gitkeep
+
+# Python bytecode caches
+__pycache__/

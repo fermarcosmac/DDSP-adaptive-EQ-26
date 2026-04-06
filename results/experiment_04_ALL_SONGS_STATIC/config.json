@@ -1,0 +1,86 @@
+{
+  "experiment_name": "experiment_04_ALL_SONGS_STATIC",
+  "scenario": "moving_person",
+  "simulation_params": {
+    "ROI": [
+      [
+        50.0,
+        20000.0
+      ]
+    ],
+    "frame_len": [
+      8192
+    ],
+    "hop_len": [
+      8192
+    ],
+    "window_type": [
+      null
+    ],
+    "forget_factor": [
+      0.05
+    ],
+    "optim_type": [
+      "GHAM-1",
+      "SGD",
+      "Adam",
+      "GHAM-3",
+      "Newton"
+    ],
+    "mu_opt": {
+      "FD-MSE": [
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        1.0
+      ],
+      "TD-MSE": [
+        0.0005,
+        0.005,
+        0.002,
+        0.0005,
+        1.0
+      ]
+    },
+    "lambda_newton": {
+      "FD-MSE": 1000.0,
+      "TD-MSE": 1.0
+    },
+    "loss_type": [
+      "FD-MSE"
+    ],
+    "eps_0": {
+      "FD-MSE": 1.0,
+      "TD-MSE": 0.0
+    },
+    "target_response_type": [
+      "delay_and_mag"
+    ],
+    "n_rirs": [
+      1
+    ],
+    "n_checkpoints": [
+      4
+    ],
+    "transition_time_s": [
+      1.0,
+      15.0,
+      30.0
+    ],
+    "use_true_LEM": [
+      false
+    ],
+    "debug_plot": [
+      false
+    ]
+  },
+  "input": {
+    "use_white_noise": false,
+    "use_songs_folder": true,
+    "max_num_songs": 12,
+    "max_audio_len_s": [
+      180.0
+    ]
+  }
+}
