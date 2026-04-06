@@ -1,6 +1,6 @@
 # Data directories (large files, not tracked)
-data/SoundCam/*
-data/MedleyDB/*
+#data/SoundCam/*
+#data/MedleyDB/*
 data/audio/output/*
 !data/SoundCam/.gitkeep
 !data/MedleyDB/.gitkeep
