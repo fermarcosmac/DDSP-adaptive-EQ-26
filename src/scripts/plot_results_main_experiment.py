@@ -144,17 +144,23 @@ def plot_results(experiment_name: str) -> None:
     for tt in transition_times:
         row = [f"tt={tt}s"]
         for opt in optim_types:
-            stats = ct_norm.get((tt, None, opt), None)
-            if stats is None:
-                # Try with any frame_len
-                matches = [v for (t, fl, o), v in ct_norm.items() if t == tt and o == opt]
-                if matches:
-                    stats = matches[0]
-            if stats and int(stats.get("total_frames", 0)) > 0:
-                avg = float(stats["total_time_s"]) / float(stats["total_frames"])
-                row.append(f"{avg:.6f}")
+            matches = [v for (t, _fl, o), v in ct_norm.items() if t == tt and o == opt]
+            if matches:
+                total_time_s = float(sum(float(m.get("total_time_s", 0.0)) for m in matches))
+                total_frames = int(sum(int(m.get("total_frames", 0)) for m in matches))
+                min_pf = float(min(float(m.get("min_avg_time_per_frame_s", float("inf"))) for m in matches))
+                max_pf = float(max(float(m.get("max_avg_time_per_frame_s", float("-inf"))) for m in matches))
             else:
-                row.append("nan")
+                total_time_s = 0.0
+                total_frames = 0
+                min_pf = float("nan")
+                max_pf = float("nan")
+
+            if total_frames > 0:
+                avg = total_time_s / float(total_frames)
+                row.append(f"{avg:.6f} [{min_pf:.6f}, {max_pf:.6f}]")
+            else:
+                row.append("nan [nan, nan]")
         print("  ".join(row))
 
     # -----------------------------------------------------------------------

@@ -7,8 +7,8 @@ data/audio/output/*
 !data/audio/output/.gitkeep
 
 # Experiment results (auto-generated)
-results/*/plot_data.pkl
-results/*/metrics.csv
+#results/*/plot_data.pkl
+#results/*/metrics.csv
 results/*/*.png
 results/*/audio/*.wav
 

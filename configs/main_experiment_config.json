@@ -14,7 +14,7 @@
     "loss_type": ["FD-MSE"],
     "optim_type": ["SGD", "GHAM-1", "Adam"],
     "mu_opt": {
-      "FD-MSE": [0.05, 0.05, 0.05]
+      "FD-MSE": [0.005, 0.05, 0.05]
     },
     "lambda_newton": {
       "FD-MSE": [1000.0]
