@@ -116,12 +116,15 @@ def plot_results(experiment_name: str) -> None:
     cfg, data, results_root = load_results(experiment_name)
 
     curves_raw = data.get("curves", {})
+    loss_curves_raw = data.get("loss_curves", {})
     tt_transitions_raw = data.get("tt_transitions", {})
     input_signals = data.get("input_signals", None)
     run_labels = [format_input_label(s) for s in input_signals] if input_signals else None
 
     curves_norm = _normalize_curve_dict(curves_raw)
+    loss_curves_norm = _normalize_curve_dict(loss_curves_raw)
     curves_grouped = _group_curves_ignore_frame(curves_norm)
+    loss_curves_grouped = _group_curves_ignore_frame(loss_curves_norm)
     ct_norm = _normalize_compute_time_stats(data.get("compute_time_stats", {}))
 
     if not curves_grouped:
@@ -196,7 +199,6 @@ def plot_results(experiment_name: str) -> None:
 
             plot_transition_markers(ax, tt_transitions_raw.get(tt, None))
             ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0, alpha=0.7)
-            ax.set_ylim(0.0, 10.0)
             ax.set_ylabel(r"$D_{\mathrm{rel}}$")
             ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.8)
             if row == n_rows - 1:
@@ -215,6 +217,60 @@ def plot_results(experiment_name: str) -> None:
     out_png = results_root / f"{experiment_name}_curves.png"
     fig.savefig(out_png, dpi=180)
     print(f"Saved figure: {out_png}")
+
+    # -----------------------------------------------------------------------
+    # Figure: loss curves (separate)
+    # -----------------------------------------------------------------------
+    if loss_curves_grouped:
+        fig_loss, axes_loss = plt.subplots(
+            n_rows, max(n_cols, 1),
+            figsize=(4.5 * max(n_cols, 1), 3.5 * n_rows),
+            squeeze=False,
+        )
+
+        for row, tt in enumerate(transition_times):
+            for col, lt in enumerate(loss_types):
+                ax = axes_loss[row, col]
+                if row == 0:
+                    ax.set_title(lt)
+
+                for opt in optim_types:
+                    key = (tt, opt, lt)
+                    if key not in loss_curves_grouped:
+                        continue
+                    plot_mean_std(
+                        ax,
+                        loss_curves_grouped[key],
+                        color=optim_color[opt],
+                        label=format_algo_label(opt),
+                        linestyle=lt_linestyle.get(lt, "-"),
+                        run_labels=run_labels,
+                        report_context=f"loss tt={tt}, opt={opt}, lt={lt}",
+                    )
+
+                plot_transition_markers(ax, tt_transitions_raw.get(tt, None))
+                ax.set_yscale("log")
+                ax.set_ylabel("Loss")
+                ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.8)
+                if row == n_rows - 1:
+                    ax.set_xlabel("Time [s]")
+
+                if row == 0 and col == 0:
+                    add_panel_label(ax, "B")
+
+            if n_cols > 1:
+                axes_loss[row, -1].legend(loc="upper right", fontsize=8)
+            else:
+                axes_loss[row, 0].legend(loc="upper right", fontsize=8)
+
+        fig_loss.suptitle(f"{experiment_name} — Loss")
+        fig_loss.tight_layout()
+        out_loss_png = results_root / f"{experiment_name}_loss_curves.png"
+        fig_loss.savefig(out_loss_png, dpi=180)
+        print(f"Saved figure: {out_loss_png}")
+    else:
+        print("No loss curves found in plot data; skipping loss figure.")
+
     plt.show()
 
 
