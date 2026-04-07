@@ -892,7 +892,7 @@ def build_step_sizes(
         Step-size tensor of the same shape as EQG_params.
     """
     step_sizes = mu_opt * torch.ones(shape, device=device)
-    step_sizes[:, -1] = step_sizes[:, -1] * 1e2
+    step_sizes[:, -1] = step_sizes[:, -1] * 1e2 # NOTE: This is a heuristic scaling factor to make gain updates more effective; it may require tuning.
     return step_sizes
 
 
@@ -1249,6 +1249,7 @@ def run_control_experiment(
             jac_fcn = (jacrev if loss_type in ("TD-MSE", "FD-MSE") else jacfwd)(params_to_loss, argnums=0)
             hess_fcn = jacfwd(jac_fcn, argnums=0)
             if optim_type == "GHAM-4":
+                raise NotImplementedError("GHAM-4 is not implemented yet due to PyTorch implementation.")
                 jac3_fcn = jacfwd(hess_fcn, argnums=0)
         case _:
             raise ValueError(f"Unknown optim_type: '{optim_type}'")
@@ -1395,6 +1396,7 @@ def run_control_experiment(
                     if optim_type == "GHAM-3":
                         correction = theta_1 + theta_2 + theta_3
                     else:
+                        raise NotImplementedError("GHAM-4 is not implemented yet due to PyTorch implementation.") # NOTE: to be implemented
                         jac3 = jac3_fcn(EQG_params, *_jac_buf_args, EQ, G, LEM, frame_len, hop_len, target_frame, target_response, forget_factor, loss_fcn, loss_type, sr, ROI, use_true_LEM).squeeze()
                         residual_4 = -step_sizes * (torch.einsum("ijk,i,j,k->", jac3, theta_1.squeeze(), theta_2.squeeze(), theta_3.squeeze()) / 6 + theta_2.T @ hess @ theta_1 + jac @ theta_3)
                         ridge_regressor.fit(jac, residual_4)

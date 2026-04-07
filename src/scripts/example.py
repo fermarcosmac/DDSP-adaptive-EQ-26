@@ -3,7 +3,7 @@ Minimal end-to-end example of the adaptive EQ framework.
 
 Runs a single experiment configuration on one input signal and displays:
   - The validation error curve over time
-  - Optional per-frame debug plots of the EQ magnitude response
+  - Plots of the final target, unprocessed, and equalized magnitude responses
 
 Intended as a quick sanity check and starting point for new users.
 
