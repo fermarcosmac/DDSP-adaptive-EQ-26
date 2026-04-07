@@ -1007,6 +1007,7 @@ def process_buffers(
     sr: int = None,
     ROI: Tuple[float, float] = None,
     use_true_LEM: bool = False,
+    debug_plot_state: dict = None,
     checkpoint_state: dict = None,
 ) -> Tuple[torch.Tensor, tuple]:
     """Run one frame of the adaptive-EQ forward pass and compute loss and validation error.
@@ -1036,6 +1037,7 @@ def process_buffers(
         sr:                      Sample rate in Hz.
         ROI:                     Region of interest (fmin, fmax) Hz.
         use_true_LEM:            Use the true LEM IR as the gradient path estimate.
+        debug_plot_state:        If not None, populated with per-frame debug plotting data.
         checkpoint_state:        If not None, populated with frequency-domain snapshot data.
 
     Returns:
@@ -1077,6 +1079,8 @@ def process_buffers(
     est_cpx_response_buffer = (1 - forget_factor_cpx) * est_cpx_response_buffer + forget_factor_cpx * LEM_H_est_ri.detach()
 
     # Compute smoothed frequency-domain magnitude responses
+    H_EQ = kirkeby_deconvolve(in_buffer.squeeze(), EQ_out_buffer[:, :, :frame_len].squeeze(), nfft, sr, ROI)
+    H_eq_db_current = 20 * torch.log10(_safe_complex_abs(H_EQ, eps=eps))
     H_SS = kirkeby_deconvolve(in_buffer.squeeze(), LEM_out_buffer[:, :, :frame_len].squeeze(), nfft, sr, ROI)
     H_mag_db_current = 20 * torch.log10(_safe_complex_abs(H_SS, eps=eps))
 
@@ -1099,6 +1103,8 @@ def process_buffers(
         return F.conv1d(F.pad(m_log.view(1, 1, -1), (pad, pad), mode="reflect"), smooth_kernel, padding=0).squeeze()
 
     H_s = _smooth(H_mag_db)
+    H_eq_s = _smooth(H_eq_db_current)
+    H_current_s = _smooth(H_mag_db_current)
     D_s = _smooth(desired_mag_db)
     LEM_s = _smooth(LEM_mag_db)
     _, freqs_log = interp_to_log_freq(H_mag_db[roi_mask], freqs_roi, n_points=n_log)
@@ -1111,6 +1117,14 @@ def process_buffers(
 
     # Validation error: relative L1 distance vs. un-equalised LEM response
     validation_error = F.l1_loss(H_s, D_s) / (F.l1_loss(LEM_s, D_s) + 1e-12)
+
+    if debug_plot_state is not None:
+        debug_plot_state["freqs_log"] = freqs_log.detach().cpu().numpy().astype(np.float32)
+        debug_plot_state["H_total_db"] = H_s.detach().cpu().numpy().astype(np.float32)
+        debug_plot_state["H_eq_db"] = H_eq_s.detach().cpu().numpy().astype(np.float32)
+        debug_plot_state["H_current_db"] = H_current_s.detach().cpu().numpy().astype(np.float32)
+        debug_plot_state["H_desired_db"] = D_s.detach().cpu().numpy().astype(np.float32)
+        debug_plot_state["H_lem_db"] = LEM_s.detach().cpu().numpy().astype(np.float32)
 
     if checkpoint_state is not None:
         checkpoint_state["freqs_log"] = freqs_log.detach().cpu().numpy().astype(np.float32)
@@ -1125,6 +1139,8 @@ def process_buffers(
 def run_control_experiment(
     sim_cfg: Dict[str, Any],
     input_spec: Tuple[str, Dict[str, Any]],
+    debug_plot_callback=None,
+    debug_plot_every: int = 1,
 ) -> Dict[str, Any]:
     """Run one full adaptive room-equalisation (ARE) experiment.
 
@@ -1135,6 +1151,8 @@ def run_control_experiment(
     Args:
         sim_cfg:    Dictionary with all simulation parameters (see configs/).
         input_spec: (mode, info) tuple — mode is "white_noise" or "song".
+        debug_plot_callback: Optional callable receiving a per-frame plotting state dictionary.
+        debug_plot_every:    Callback update period in frames (>=1).
 
     Returns:
         Result dictionary containing loss and validation histories, audio outputs,
@@ -1249,7 +1267,7 @@ def run_control_experiment(
             jac_fcn = (jacrev if loss_type in ("TD-MSE", "FD-MSE") else jacfwd)(params_to_loss, argnums=0)
             hess_fcn = jacfwd(jac_fcn, argnums=0)
             if optim_type == "GHAM-4":
-                raise NotImplementedError("GHAM-4 is not implemented yet due to PyTorch implementation.")
+                raise NotImplementedError("GHAM-4 is not implemented yet due to internal PyTorch conflicts.")
                 jac3_fcn = jacfwd(hess_fcn, argnums=0)
         case _:
             raise ValueError(f"Unknown optim_type: '{optim_type}'")
@@ -1281,6 +1299,7 @@ def run_control_experiment(
     noEQ_out_buffer = torch.zeros(1, 1, LEM_out_len, device=device)
 
     n_frames = (T - frame_len) // hop_len + 1
+    debug_plot_every = max(1, int(debug_plot_every))
     loss_history: List[float] = []
     validation_error_history: List[float] = []
     checkpoint_states: List[dict] = []
@@ -1310,6 +1329,8 @@ def run_control_experiment(
 
         do_checkpoint = k in checkpoint_indices
         checkpoint_state = {} if do_checkpoint else None
+        do_debug_plot = (debug_plot_callback is not None) and (k % debug_plot_every == 0)
+        debug_plot_state = {} if do_debug_plot else None
 
         loss, buffers = process_buffers(
             EQG_params, in_buffer, EQ_out_buffer, LEM_out_buffer,
@@ -1318,13 +1339,21 @@ def run_control_experiment(
             EQ, G, LEM, frame_len, hop_len,
             target_frame, target_response, forget_factor,
             loss_type, loss_fcn, sr=sr, ROI=ROI,
-            use_true_LEM=use_true_LEM, checkpoint_state=checkpoint_state,
+            use_true_LEM=use_true_LEM,
+            debug_plot_state=debug_plot_state,
+            checkpoint_state=checkpoint_state,
         )
         (EQ_out_buffer, LEM_out_buffer, est_mag_response_buffer,
          est_cpx_response_buffer, validation_error, noEQ_in_buffer, noEQ_out_buffer) = buffers
 
         loss_history.append(torch.mean(loss).item())
         validation_error_history.append(validation_error.item())
+
+        if debug_plot_state is not None:
+            debug_plot_state["frame_idx"] = int(k)
+            debug_plot_state["time_s"] = float(current_time_s)
+            debug_plot_state["validation_error"] = float(validation_error.item())
+            debug_plot_callback(debug_plot_state)
 
         # Collect checkpoint snapshot
         if checkpoint_state is not None:
@@ -1396,7 +1425,7 @@ def run_control_experiment(
                     if optim_type == "GHAM-3":
                         correction = theta_1 + theta_2 + theta_3
                     else:
-                        raise NotImplementedError("GHAM-4 is not implemented yet due to PyTorch implementation.") # NOTE: to be implemented
+                        raise NotImplementedError("GHAM-4 is not implemented yet due to internal PyTorch conflicts.") # NOTE: to be implemented
                         jac3 = jac3_fcn(EQG_params, *_jac_buf_args, EQ, G, LEM, frame_len, hop_len, target_frame, target_response, forget_factor, loss_fcn, loss_type, sr, ROI, use_true_LEM).squeeze()
                         residual_4 = -step_sizes * (torch.einsum("ijk,i,j,k->", jac3, theta_1.squeeze(), theta_2.squeeze(), theta_3.squeeze()) / 6 + theta_2.T @ hess @ theta_1 + jac @ theta_3)
                         ridge_regressor.fit(jac, residual_4)

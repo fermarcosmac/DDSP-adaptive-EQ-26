@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,6 +48,50 @@ _RIR_MAP = {
     "moving_person":   root / "data" / "SoundCam" / "moving_person",
     "static":          root / "data" / "SoundCam" / "moving_listener",
 }
+
+
+class _LiveResponsePlot:
+    """Simple interactive plotter for live frequency-response adaptation."""
+
+    def __init__(self) -> None:
+        configure_text_rendering()
+        plt.ion()
+        self.fig, self.ax = plt.subplots(figsize=(8, 4.5))
+        self.line_total, = self.ax.plot([], [], color="C0", linewidth=1.3, label="Total (smoothed)")
+        self.line_eq, = self.ax.plot([], [], color="C2", linestyle=":", linewidth=1.1, label="EQ only")
+        self.line_current, = self.ax.plot([], [], color="C1", linewidth=0.9, alpha=0.9, label="Current frame")
+        self.line_desired, = self.ax.plot([], [], color="black", linewidth=1.2, label="Desired")
+        self.line_lem, = self.ax.plot([], [], color="black", linestyle="--", linewidth=0.9, label="LEM")
+        self.ax.set_xscale("log")
+        self.ax.set_xlim(50, 20000)
+        self.ax.set_ylim(-40, 20)
+        self.ax.set_xlabel("Frequency [Hz]")
+        self.ax.set_ylabel("Magnitude [dB]")
+        self.ax.set_title("Adaptive EQ — Live Response")
+        self.ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.8)
+        self.ax.legend(fontsize=8, loc="lower left")
+        self.text = self.ax.text(0.01, 0.98, "", transform=self.ax.transAxes, va="top", fontsize=8)
+        self.fig.tight_layout()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def __call__(self, state: Dict[str, Any]) -> None:
+        f = np.asarray(state.get("freqs_log", []), dtype=float)
+        if f.size == 0:
+            return
+        self.line_total.set_data(f, np.asarray(state.get("H_total_db", []), dtype=float))
+        self.line_eq.set_data(f, np.asarray(state.get("H_eq_db", []), dtype=float))
+        self.line_current.set_data(f, np.asarray(state.get("H_current_db", []), dtype=float))
+        self.line_desired.set_data(f, np.asarray(state.get("H_desired_db", []), dtype=float))
+        self.line_lem.set_data(f, np.asarray(state.get("H_lem_db", []), dtype=float))
+        self.text.set_text(
+            f"frame={state.get('frame_idx', -1)}  "
+            f"t={state.get('time_s', 0.0):.2f}s  "
+            f"D_rel={state.get('validation_error', float('nan')):.3f}"
+        )
+        self.fig.canvas.draw_idle()
+        self.fig.canvas.flush_events()
+        plt.pause(0.001)
 
 
 def _plot_validation_curve(time_axis: np.ndarray, val_hist: np.ndarray, transitions=None) -> None:
@@ -162,6 +207,10 @@ def main(config_path: Path) -> None:
     sim_cfg.setdefault("use_true_LEM", False)
     sim_cfg.setdefault("n_checkpoints", 0)
 
+    debug_cfg = dict(cfg.get("debug_plot", {}))
+    debug_plot_enabled = bool(debug_cfg.get("enabled", False))
+    debug_plot_every = int(debug_cfg.get("update_every_frames", 1))
+
     scenario = cfg.get("scenario", "moving_position")
     if scenario not in _RIR_MAP:
         raise ValueError(f"Unknown scenario '{scenario}'. Expected one of {list(_RIR_MAP)}.")
@@ -188,8 +237,16 @@ def main(config_path: Path) -> None:
     print(f"  Loss:       {sim_cfg['loss_type']}")
     print(f"  Frame len:  {sim_cfg['frame_len']} samples")
     print(f"  Input:      {input_spec[0]}")
+    print(f"  Live plot:  {'on' if debug_plot_enabled else 'off'}")
 
-    result = run_control_experiment(sim_cfg, input_spec)
+    live_plotter = _LiveResponsePlot() if debug_plot_enabled else None
+    # Main logic is implemented within run_control_experiment
+    result = run_control_experiment(
+        sim_cfg,
+        input_spec,
+        debug_plot_callback=live_plotter,
+        debug_plot_every=debug_plot_every,
+    )
     if result is None:
         print("Experiment returned no result.")
         return
