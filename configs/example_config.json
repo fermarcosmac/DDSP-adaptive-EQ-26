@@ -10,7 +10,7 @@
     "n_rirs": 2,
     "transition_time_s": 1.0,
     "loss_type": "FD-MSE",
-    "optim_type": "SGD",
+    "optim_type": "GHAM-1",
     "mu_opt": 0.005,
     "lambda_newton": 1000.0,
     "eps_0": 1.0,
@@ -18,7 +18,8 @@
     "n_checkpoints": 0
   },
   "input": {
-    "use_white_noise": true,
-    "max_audio_len_s": 30.0
+    "use_white_noise": false,
+    "song_path": "data/MedleyDB/MidnightBlue_HuntingSeason_MIX.wav",
+    "max_audio_len_s": 60.0
   }
 }

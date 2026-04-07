@@ -15,13 +15,68 @@ from __future__ import annotations
 import itertools
 import json
 import math
+import os
 import random
+import sys
 import time
 import warnings
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
+
+
+def _configure_windows_cuda_dll_search_paths() -> None:
+    """Ensure CUDA/NVRTC DLL directories are discoverable on Windows.
+
+    VS Code debug launches can use the selected interpreter without a fully
+    activated conda PATH, which may hide nvrtc-builtins64_121.dll from the
+    loader. Registering likely env DLL folders makes the behavior deterministic.
+    """
+    if os.name != "nt":
+        return
+
+    env_roots = []
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if conda_prefix:
+        env_roots.append(Path(conda_prefix))
+    env_roots.append(Path(sys.prefix))
+
+    candidates: List[Path] = []
+    for root_dir in env_roots:
+        candidates.extend([
+            root_dir / "bin",
+            root_dir / "Library" / "bin",
+            root_dir / "Scripts",
+            root_dir,
+        ])
+
+    seen: set[str] = set()
+    current_path = os.environ.get("PATH", "")
+    path_entries = current_path.split(";") if current_path else []
+
+    for p in candidates:
+        p_resolved = str(p)
+        p_key = p_resolved.lower()
+        if p_key in seen or not p.is_dir():
+            continue
+        seen.add(p_key)
+
+        if hasattr(os, "add_dll_directory"):
+            try:
+                os.add_dll_directory(p_resolved)
+            except OSError:
+                pass
+
+        # Keep PATH in sync for subprocesses and loaders that still consult PATH.
+        if all(existing.lower() != p_key for existing in path_entries):
+            path_entries.insert(0, p_resolved)
+
+    os.environ["PATH"] = ";".join(path_entries)
+
+
+_configure_windows_cuda_dll_search_paths()
+
 import torch
 import torch.nn.functional as F
 import torchaudio
@@ -1367,6 +1422,11 @@ def run_control_experiment(
 
     total_time_s = time.perf_counter() - exp_t_start
     time_axis = np.arange(len(validation_error_history), dtype=float) * (hop_len / sr)
+    nfft_plot = 2 * frame_len - 1
+    target_freq_axis = np.fft.rfftfreq(nfft_plot, d=1.0 / sr)
+    target_mag_db = 20.0 * np.log10(
+        np.abs(np.fft.rfft(target_response.squeeze().detach().cpu().numpy(), n=nfft_plot)) + 1e-12
+    )
 
     with torch.no_grad():
         result = {
@@ -1387,6 +1447,8 @@ def run_control_experiment(
             "final_eq_params_normalized": EQG_params[:, :-1].detach().cpu().numpy().astype(np.float32),
             "final_gain_db": EQG_params[:, -1:].detach().cpu().numpy().astype(np.float32),
             "final_true_lem_ir": LEM.squeeze().detach().cpu().numpy().astype(np.float32),
+            "target_freq_axis": target_freq_axis.astype(np.float32),
+            "target_mag_db": target_mag_db.astype(np.float32),
         }
     if checkpoint_states:
         result["checkpoints"] = checkpoint_states

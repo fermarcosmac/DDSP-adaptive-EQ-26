@@ -36,6 +36,7 @@ from utils.common import (
     run_control_experiment,
     set_seed,
 )
+from local_dasp_pytorch.modules import Gain, ParametricEQ
 from utils.plotting import configure_text_rendering, log_smooth_curve
 
 # ---------------------------------------------------------------------------
@@ -85,13 +86,48 @@ def _plot_eq_response(result: dict, frame_len: int, sr: int) -> None:
         ax.plot(f_t[m], d_t[m], color="black", linewidth=1.3, label="Desired")
 
     # True LEM (unprocessed)
+    lem_db_smooth = None
+    f_s = None
     if "final_true_lem_ir" in result:
         lem_ir = np.asarray(result["final_true_lem_ir"], dtype=np.float64)
         H_lem = np.fft.rfft(lem_ir, n=nfft)
         lem_db = 20.0 * np.log10(np.abs(H_lem) + 1e-12)
         m = freqs > 0
-        f_s, lem_s = log_smooth_curve(freqs[m], lem_db[m], window_pts=121)
-        ax.plot(f_s, lem_s, color="black", linestyle="--", linewidth=1.0, label="True LEM (unprocessed)")
+        f_s, lem_db_smooth = log_smooth_curve(freqs[m], lem_db[m], window_pts=121)
+        ax.plot(f_s, lem_db_smooth, color="black", linestyle="--", linewidth=1.0, label="True LEM (unprocessed)")
+
+    # Equalized response = final EQ response * room response
+    if (
+        lem_db_smooth is not None
+        and "final_eq_params_normalized" in result
+        and "final_gain_db" in result
+    ):
+        eq = ParametricEQ(sample_rate=sr)
+        gain = Gain(sample_rate=sr)
+        device = torch.device("cpu")
+
+        eq_norm = torch.from_numpy(np.asarray(result["final_eq_params_normalized"], dtype=np.float32)).to(device)
+        gain_db = torch.from_numpy(np.asarray(result["final_gain_db"], dtype=np.float32)).view(1, 1).to(device)
+
+        impulse = torch.zeros(1, 1, nfft, dtype=torch.float32, device=device)
+        impulse[:, :, 0] = 1.0
+
+        eq_ir = eq.process_normalized(impulse, eq_norm)
+        eq_ir = gain.process(eq_ir, sr, gain_db)
+        eq_ir_np = eq_ir.squeeze().detach().cpu().numpy()
+
+        H_eq = np.fft.rfft(eq_ir_np, n=nfft)
+        eq_db = 20.0 * np.log10(np.abs(H_eq) + 1e-12)
+        m = freqs > 0
+        f_eq, eq_db_smooth = log_smooth_curve(freqs[m], eq_db[m], window_pts=121)
+        ax.plot(f_eq, eq_db_smooth, color="C2", linestyle=":", linewidth=1.1, label="EQ only")
+
+        if len(f_s) == len(f_eq) and np.allclose(f_s, f_eq):
+            eq_total_db = lem_db_smooth + eq_db_smooth
+            ax.plot(f_s, eq_total_db, color="C0", linewidth=1.3, label="Equalized")
+        else:
+            eq_total_db = np.interp(f_s, f_eq, eq_db_smooth) + lem_db_smooth
+            ax.plot(f_s, eq_total_db, color="C0", linewidth=1.3, label="Equalized")
 
     ax.set_xscale("log")
     ax.set_xlim(50, 20000)
