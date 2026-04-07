@@ -38,7 +38,7 @@
       "label": "GHAM1_FD",
       "optim_type": "GHAM-1",
       "loss_type": "FD-MSE",
-      "mu_opt": 0.5,
+      "mu_opt": 0.05,
       "lambda_newton": 1000.0,
       "eps_0": 1.0,
       "use_true_LEM": false,
