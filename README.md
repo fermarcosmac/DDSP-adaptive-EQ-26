@@ -26,7 +26,13 @@ DDSP-adaptive-EQ-26/
 │   └── SoundCam/
 │       ├── moving_listener/        # RIRs: moving listener position scenario
 │       └── moving_person/          # RIRs: moving person scenario
-├── results/                        # Experiment outputs (auto-created)
+├── results/
+│   └── <experiment_name>/          # One directory per experiment (auto-created)
+│       ├── audio/                  # Per-run EQ-processed WAV files
+│       ├── config.json             # Config used to produce these results
+│       ├── plot_data.pkl           # Serialised curve data for plotting
+│       └── metrics.csv             # Per-file audio quality metrics
+├── figs/                           # Saved figures and animations
 ├── src/
 │   ├── external/
 │   │   ├── local_dasp_pytorch/     # DDSP building blocks (ParametricEQ, biquads, …)

@@ -4,7 +4,7 @@ Metrics evaluation script.
 Loads EQ-processed WAV files from a completed experiment and computes
 per-file audio quality metrics against the desired (reference) output.
 
-Results are printed to stdout and saved as a CSV.
+Results are printed to stdout and saved as results/<experiment_name>/metrics.csv.
 
 Usage:
   python src/scripts/metrics_eval.py --experiment main_experiment
@@ -48,8 +48,8 @@ def _load_mono_float(path: Path, sr_target: int) -> tuple[np.ndarray, int]:
 
 
 def evaluate_experiment(experiment_name: str, metrics: list[str], eval_last_s: float) -> None:
-    audio_dir = root / "data" / "audio" / "output" / experiment_name
     results_root = root / "results" / experiment_name
+    audio_dir = results_root / "audio"
 
     if not audio_dir.exists():
         print(f"Audio output directory not found: {audio_dir}")

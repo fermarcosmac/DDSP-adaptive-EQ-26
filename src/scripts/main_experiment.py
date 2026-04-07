@@ -7,7 +7,7 @@ transition times, loss types) using the adaptive EQ framework.
 Results are saved as:
   results/<experiment_name>/config.json       — copy of the run config
   results/<experiment_name>/plot_data.pkl     — serialised curve data for plotting
-  data/audio/output/<experiment_name>/        — per-run EQ-processed WAV files
+  results/<experiment_name>/audio/            — per-run EQ-processed WAV files
 
 Usage:
   python src/scripts/main_experiment.py --config configs/main_experiment_config.json
@@ -88,7 +88,7 @@ def main(config_path: Path) -> None:
     input_ids_used: set = set()
     checkpoint_examples = defaultdict(dict)  # loss_type -> {optim: [checkpoints]}
 
-    audio_out_dir = root / "data" / "audio" / "output" / experiment_name
+    audio_out_dir = root / "results" / experiment_name / "audio"
     audio_out_dir.mkdir(parents=True, exist_ok=True)
     audio_saved_keys: set = set()
 

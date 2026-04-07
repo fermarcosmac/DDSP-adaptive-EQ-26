@@ -7,7 +7,7 @@ compares them against FxLMS and FxFDAF FIR baselines.
 Results are saved as:
   results/<experiment_name>/config.json      — copy of the run config
   results/<experiment_name>/plot_data.pkl    — serialised curve data for plotting
-  data/audio/output/<experiment_name>/       — per-run EQ-processed WAV files
+  results/<experiment_name>/audio/           — per-run EQ-processed WAV files
 
 Usage:
   python src/scripts/ablation_study.py --config configs/ablation_study_config.json
@@ -104,7 +104,7 @@ def main(config_path: Path) -> None:
     target_response_example = None
     true_lem_response_example = None
 
-    audio_out_dir = root / "data" / "audio" / "output" / experiment_name
+    audio_out_dir = root / "results" / experiment_name / "audio"
     audio_out_dir.mkdir(parents=True, exist_ok=True)
     audio_saved_keys: set = set()
 
