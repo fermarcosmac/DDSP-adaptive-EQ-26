@@ -37,7 +37,7 @@ from utils.common import (
     run_control_experiment,
     set_seed,
 )
-from local_dasp_pytorch.modules import Gain, ParametricEQ
+from external.local_dasp_pytorch.modules import Gain, ParametricEQ
 from utils.plotting import configure_text_rendering, log_smooth_curve
 
 # ---------------------------------------------------------------------------

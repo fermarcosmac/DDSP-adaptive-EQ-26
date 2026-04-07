@@ -93,7 +93,7 @@ from torch.func import jacfwd, jacrev
 from torch.linalg import lstsq
 
 from modules.modules import LEMConv, Ridge
-from local_dasp_pytorch.modules import Gain, ParametricEQ
+from external.local_dasp_pytorch.modules import Gain, ParametricEQ
 
 # Repository root (two levels above this file: src/utils -> src -> repo root)
 root = Path(__file__).resolve().parents[2]
