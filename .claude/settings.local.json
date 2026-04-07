@@ -8,7 +8,8 @@
       "Bash(cp -r lib/local_pyaec src/external/local_pyaec)",
       "Bash(rm -f src/experiment_01.py src/experiment_02.py src/experiment_03.py src/experiment_04.py src/experiment_05.py src/utils.py src/utils_ex04.py src/utils_ex05.py src/modules.py src/modules_ex04.py src/plot_experiment_04_results.py src/plot_experiment_05_results.py src/evaluate_experiment_04_metrics.py src/evaluate_experiment_05_metrics.py src/adaptive_EQ_skeleton.py src/crop_audio.py src/example_trial_01.py src/example_trial_02.py src/SoundCam_EDA.ipynb env_DAFx26_backup.yml Design_document_DAFx26_repo.docx Design_document_DAFx26_repo.pdf)",
       "Bash(rm -rf src/__pycache__ src/external/local_dasp_pytorch/__pycache__ src/external/local_pyaec/frequency_domain_adaptive_filters/__pycache__ src/external/local_pyaec/time_domain_adaptive_filters/__pycache__)",
-      "Bash(rm -rf lib/)"
+      "Bash(rm -rf lib/)",
+      "Bash(python -c ':*)"
     ]
   }
 }
