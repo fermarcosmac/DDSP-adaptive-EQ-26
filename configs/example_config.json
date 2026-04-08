@@ -7,7 +7,7 @@
     "frame_len": 8192,
     "forget_factor": 0.05,
     "target_response_type": "delay_and_mag",
-    "n_rirs": 2,
+    "n_rirs": 3,
     "transition_time_s": 1.0,
     "loss_type": "FD-MSE",
     "optim_type": "GHAM-1",
@@ -23,7 +23,12 @@
     "max_audio_len_s": 60.0
   },
   "debug_plot": {
-    "enabled": true,
-    "update_every_frames": 1
-  }
+  "enabled": true,
+  "update_every_frames": 1,
+  "eq_smoothing_alpha": 0.5,
+  "save_gif": true,
+  "gif_fps": 20,
+  "gif_capture_every": 1,
+  "gif_path": "figs/example_EQ_animation.gif"
+}
 }

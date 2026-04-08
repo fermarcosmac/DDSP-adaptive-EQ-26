@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
+from PIL import Image
 
 root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root / "src"))
@@ -53,10 +54,26 @@ _RIR_MAP = {
 class _LiveResponsePlot:
     """Simple interactive plotter for live frequency-response adaptation."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        eq_smoothing_alpha: float = 0.2,
+        save_gif: bool = False,
+        gif_path: Path | None = None,
+        gif_fps: int = 20,
+        gif_capture_every: int = 1,
+    ) -> None:
         configure_text_rendering()
         plt.ion()
         self.fig, self.ax = plt.subplots(figsize=(8, 4.5))
+        self.eq_smoothing_alpha = float(np.clip(eq_smoothing_alpha, 0.0, 1.0))
+        self._eq_prev_smoothed: np.ndarray | None = None
+        self.save_gif = bool(save_gif)
+        self.gif_path = Path(gif_path) if gif_path is not None else (root / "figs" / "example_EQ_animation.gif")
+        self.gif_fps = max(1, int(gif_fps))
+        self.gif_capture_every = max(1, int(gif_capture_every))
+        self._frames: list[Image.Image] = []
+        self._callback_count = 0
+
         self.line_total, = self.ax.plot([], [], color="C0", linewidth=1.3, label="Total (smoothed)")
         self.line_eq, = self.ax.plot([], [], color="C2", linestyle=":", linewidth=1.1, label="EQ only")
         self.line_current, = self.ax.plot([], [], color="C1", linewidth=0.9, alpha=0.9, label="Current frame")
@@ -79,8 +96,17 @@ class _LiveResponsePlot:
         f = np.asarray(state.get("freqs_log", []), dtype=float)
         if f.size == 0:
             return
+
+        eq_raw = np.asarray(state.get("H_eq_db", []), dtype=float)
+        if self._eq_prev_smoothed is None or self._eq_prev_smoothed.shape != eq_raw.shape:
+            eq_smoothed = eq_raw.copy()
+        else:
+            a = self.eq_smoothing_alpha
+            eq_smoothed = a * eq_raw + (1.0 - a) * self._eq_prev_smoothed
+        self._eq_prev_smoothed = eq_smoothed
+
         self.line_total.set_data(f, np.asarray(state.get("H_total_db", []), dtype=float))
-        self.line_eq.set_data(f, np.asarray(state.get("H_eq_db", []), dtype=float))
+        self.line_eq.set_data(f, eq_smoothed)
         self.line_current.set_data(f, np.asarray(state.get("H_current_db", []), dtype=float))
         self.line_desired.set_data(f, np.asarray(state.get("H_desired_db", []), dtype=float))
         self.line_lem.set_data(f, np.asarray(state.get("H_lem_db", []), dtype=float))
@@ -91,7 +117,28 @@ class _LiveResponsePlot:
         )
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
+
+        self._callback_count += 1
+        if self.save_gif and (self._callback_count % self.gif_capture_every == 0):
+            rgba = np.asarray(self.fig.canvas.buffer_rgba())
+            rgb = rgba[:, :, :3]
+            self._frames.append(Image.fromarray(rgb))
+
         plt.pause(0.001)
+
+    def finalize(self) -> None:
+        if self.save_gif and self._frames:
+            self.gif_path.parent.mkdir(parents=True, exist_ok=True)
+            self._frames[0].save(
+                self.gif_path,
+                save_all=True,
+                append_images=self._frames[1:],
+                duration=int(round(1000.0 / self.gif_fps)),
+                loop=0,
+            )
+            print(f"Saved debug animation GIF: {self.gif_path}")
+        plt.ioff()
+        plt.close(self.fig)
 
 
 def _plot_validation_curve(time_axis: np.ndarray, val_hist: np.ndarray, transitions=None) -> None:
@@ -210,6 +257,11 @@ def main(config_path: Path) -> None:
     debug_cfg = dict(cfg.get("debug_plot", {}))
     debug_plot_enabled = bool(debug_cfg.get("enabled", False))
     debug_plot_every = int(debug_cfg.get("update_every_frames", 1))
+    eq_smoothing_alpha = float(debug_cfg.get("eq_smoothing_alpha", 0.2))
+    save_debug_gif = bool(debug_cfg.get("save_gif", False))
+    debug_gif_fps = int(debug_cfg.get("gif_fps", 20))
+    debug_gif_capture_every = int(debug_cfg.get("gif_capture_every", 1))
+    debug_gif_path = Path(debug_cfg.get("gif_path", root / "figs" / "example_EQ_animation.gif"))
 
     scenario = cfg.get("scenario", "moving_position")
     if scenario not in _RIR_MAP:
@@ -239,7 +291,17 @@ def main(config_path: Path) -> None:
     print(f"  Input:      {input_spec[0]}")
     print(f"  Live plot:  {'on' if debug_plot_enabled else 'off'}")
 
-    live_plotter = _LiveResponsePlot() if debug_plot_enabled else None
+    live_plotter = (
+        _LiveResponsePlot(
+            eq_smoothing_alpha=eq_smoothing_alpha,
+            save_gif=save_debug_gif,
+            gif_path=debug_gif_path,
+            gif_fps=debug_gif_fps,
+            gif_capture_every=debug_gif_capture_every,
+        )
+        if debug_plot_enabled
+        else None
+    )
     # Main logic is implemented within run_control_experiment
     result = run_control_experiment(
         sim_cfg,
@@ -247,6 +309,8 @@ def main(config_path: Path) -> None:
         debug_plot_callback=live_plotter,
         debug_plot_every=debug_plot_every,
     )
+    if live_plotter is not None:
+        live_plotter.finalize()
     if result is None:
         print("Experiment returned no result.")
         return
