@@ -39,7 +39,7 @@ from utils.metrics import (
 # Configuration (edit these globals or pass CLI arguments)
 # ---------------------------------------------------------------------------
 EXPERIMENT_NAME = "main_experiment"
-METRICS = ["PEAQ", "MRSTFT", "MSD", "Spectral-Centroid", "RMSE", "SI-SDR", "LUFS-diff"]
+METRICS = ["MRSTFT", "MSD", "Spectral-Centroid", "RMSE", "SI-SDR", "LUFS-diff"] # Beware! PEAQ takes a long time to compute, especially on long files. Use with --eval-last-s to speed up.
 EVAL_LAST_S: float = 0.0                     # if > 0, evaluate only the last N seconds
 REFERENCE_DELAY_SAMPLES = 300                # apply delay to reference before scoring
 DITHER_STD = 1e-8                            # shared noise floor to stabilize sensitive metrics
