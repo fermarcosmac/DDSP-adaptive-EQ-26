@@ -1,3 +1,0 @@
-transition_s,transition_token,optimizer,loss,peaq_mean,peaq_std,si_sdr_mean,si_sdr_std,mr_stft_error_mean,mr_stft_error_std,mel_spectral_distance_mean,mel_spectral_distance_std,spectral_centroid_delta_mean,spectral_centroid_delta_std,rmse_mean,rmse_std,lufs_difference_mean,lufs_difference_std,crest_factor_difference_mean,crest_factor_difference_std
-1,1p0,No EQ,FD-MSE,-1.901971221,0.003409032244,-23.55226517,11.67148495,1.232837915,0.115038693,4.594676495,0.6114987731,670.7175293,629.9455566,0.2018415779,0.05223534629,0.7462227941,0.7161693573,0,0
-1,1p0,Proposed_SGD_FD,FD-MSE,-1.901836395,0.002691675676,-26.75520897,13.63918591,10.29686165,9.581380844,4.288390636,0.9314908981,369.3576965,219.3409576,0.1516175568,0.03699797764,15.45291996,8.413375854,0,0
