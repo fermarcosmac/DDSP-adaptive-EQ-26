@@ -87,14 +87,23 @@ conda activate ddsp-are
 
 ### SoundCam RIRs
 
-Place the SoundCam room impulse responses under:
+A very small subset of the SoundCam room impulse responses are stored in:
 
 ```
 data/SoundCam/moving_listener/   ← moving listener position scenario
 data/SoundCam/moving_person/     ← moving person scenario
 ```
 
-Each directory should contain `*.wav` or `*.npy` RIR files in order of recording position.
+Each directory contains `*.wav` RIR files in order of recording position. The following animation shows the physical layout of the room that resulted in the used responses.
+
+<br><br>
+
+<p align="center">
+  <img src="figs/moving_listener.gif" alt="Moving listener scenario" width="700" />
+</p>
+<p align="center"><em>Figure 3. Room layout (bottom) and resulting impulse (top left) and magnituide (top right) responses for a moving listener position .</em></p>
+
+<br><br>
 
 ### MedleyDB
 
