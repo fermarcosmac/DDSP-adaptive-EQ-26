@@ -5,11 +5,13 @@ Code accompanying the paper submitted to DAFx26:
 > **A DDSP Framework for Adaptive Room Equalization**  
 > Fernando Marcos-Macías
 
+![Example adaptive EQ animation](figs/example_EQ_animation.gif)
+
 ---
 
 ## Overview
 
-This repository implements a differentiable digital signal processing (DDSP) framework for adaptive room equalization (ARE). A 7-band parametric EQ is optimized frame-by-frame to compensate for the room's frequency response using gradient-based methods. The framework supports several optimizers (SGD, GHAM-1 through GHAM-4, Newton) and two loss types (FD-MSE, TD-MSE) and is compared against classical FIR adaptive filters (FxLMS, FxFDAF).
+This repository implements a differentiable digital signal processing (DDSP) framework for adaptive room equalization (ARE). A 7-band parametric EQ is optimized frame-by-frame to compensate for the room's frequency response using gradient-based methods. The framework supports several optimizers (SGD, Adam, Newton, iHAM-1 through iHAM-3) and two loss types (FD-MSE, TD-MSE) and is compared against classical FIR adaptive filters (FxLMS, FxFDAF). The implementation is fully modular, so ay of these elements---equalizer structure, live room response estimation method, loss function and optimizer---may be replaced to test the effectiveness of the adaptive room equalization framework.
 
 ---
 
@@ -25,7 +27,7 @@ DDSP-adaptive-EQ-26/
 │   ├── MedleyDB/                   # Full-track music mixes (excitation signals)
 │   └── SoundCam/
 │       ├── moving_listener/        # RIRs: moving listener position scenario
-│       └── moving_person/          # RIRs: moving person scenario
+│       └── moving_person/          # RIRs: moving person scenario  
 ├── results/
 │   └── <experiment_name>/          # One directory per experiment (auto-created)
 │       ├── audio/                  # Per-run EQ-processed WAV files
@@ -143,6 +145,9 @@ Each experiment is controlled by a JSON config file in `configs/`. Key fields:
 
 ## Citation
 
+<!-- Citation not yet available: paper is currently under review for publication. -->
+
+<!--
 ```bibtex
 @inproceedings{marcos2026ddsp,
   title     = {A {DDSP} Framework for Adaptive Room Equalization},
@@ -151,3 +156,4 @@ Each experiment is controlled by a JSON config file in `configs/`. Key fields:
   year      = {2026}
 }
 ```
+-->
