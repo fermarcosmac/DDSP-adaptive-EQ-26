@@ -11,13 +11,15 @@ Code accompanying the paper submitted to DAFx26:
 
 This repository implements a differentiable digital signal processing (DDSP) framework for adaptive room equalization (ARE). A 7-band parametric EQ is optimized frame-by-frame to compensate for the room's frequency response using gradient-based methods. The framework supports several optimizers (SGD, Adam, Newton, iHAM-1 through iHAM-3) and two loss types (FD-MSE, TD-MSE) and is compared against classical FIR adaptive filters (FxLMS, FxFDAF). The implementation is fully modular, so ay of these elements---equalizer structure, live room response estimation method, loss function and optimizer---may be replaced to test the effectiveness of the adaptive room equalization framework.
 
-<img src="figs/Adaptive_EQ_schematic.png" alt="Adaptive EQ schematic" width="700" />
+<p align="center">
+  <img src="figs/Adaptive_EQ_schematic.png" alt="Adaptive EQ schematic" width="700" />
+</p>
+<p align="center"><em>Figure 1. Block diagram of the proposed DDSP adaptive room equalization framework.</em></p>
 
-*Figure 1. Block diagram of the proposed DDSP adaptive room equalization framework.*
-
-<img src="figs/example_EQ_animation.gif" alt="Adaptive EQ animation" width="700" />
-
-*Figure 2. Example animation of the adaptive parametric EQ evolution over time on a time-varying acoustic scenario.*
+<p align="center">
+  <img src="figs/example_EQ_animation.gif" alt="Adaptive EQ animation" width="700" />
+</p>
+<p align="center"><em>Figure 2. Example animation of the adaptive parametric EQ evolution over time on a time-varying acoustic scenario.</em></p>
 
 ---
 
