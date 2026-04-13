@@ -11,11 +11,11 @@ Code accompanying the paper submitted to DAFx26:
 
 This repository implements a differentiable digital signal processing (DDSP) framework for adaptive room equalization (ARE). A 7-band parametric EQ is optimized frame-by-frame to compensate for the room's frequency response using gradient-based methods. The framework supports several optimizers (SGD, Adam, Newton, iHAM-1 through iHAM-3) and two loss types (FD-MSE, TD-MSE) and is compared against classical FIR adaptive filters (FxLMS, FxFDAF). The implementation is fully modular, so ay of these elements---equalizer structure, live room response estimation method, loss function and optimizer---may be replaced to test the effectiveness of the adaptive room equalization framework.
 
-![Example adaptive EQ animation](figs/Adaptive_EQ_schematic.png)
+<img src="figs/Adaptive_EQ_schematic.png" alt="Adaptive EQ schematic" width="900" />
 
 *Figure 1. Block diagram of the proposed DDSP adaptive room equalization framework.*
 
-![Example adaptive EQ animation](figs/example_EQ_animation.gif)
+<img src="figs/example_EQ_animation.gif" alt="Adaptive EQ animation" width="700" />
 
 *Figure 2. Example animation of the adaptive parametric EQ evolution over time on a time-varying acoustic scenario.*
 
@@ -143,7 +143,7 @@ Each experiment is controlled by a JSON config file in `configs/`. Key fields:
 | `scenario` | `"moving_position"`, `"moving_person"`, or `"static"` |
 | `simulation_params.frame_len` | Analysis frame length in samples |
 | `simulation_params.loss_type` | `"FD-MSE"` or `"TD-MSE"` |
-| `simulation_params.optim_type` | `"SGD"`, `"GHAM-1"` … `"GHAM-4"`, `"Newton"` |
+| `simulation_params.optim_type` | `"SGD"`, `"iHAM-1"` … `"iHAM-3"`, `"Newton"` |
 | `simulation_params.mu_opt` | Step size (per-optimizer or per-loss-type dict) |
 | `input.max_num_songs` | Maximum number of MedleyDB songs to include |
 
