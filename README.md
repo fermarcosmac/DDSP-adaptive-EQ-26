@@ -77,7 +77,7 @@ DDSP-adaptive-EQ-26/
 ## Installation
 
 ```bash
-conda env create -n ddsp-are -f requirements.yml
+conda env create --name ddsp-are --file requirements.yml
 conda activate ddsp-are
 ```
 
