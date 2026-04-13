@@ -17,7 +17,7 @@ This repository implements a differentiable digital signal processing (DDSP) fra
 
 ![Example adaptive EQ animation](figs/example_EQ_animation.gif)
 
-*Figure 1. Example animation of the adaptive parametric EQ evolution over time on a simulated time-varying acoustic scenario.*
+*Figure 2. Example animation of the adaptive parametric EQ evolution over time on a time-varying acoustic scenario.*
 
 ---
 
