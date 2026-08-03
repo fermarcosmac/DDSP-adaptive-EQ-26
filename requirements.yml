@@ -15,6 +15,9 @@ dependencies:
   - matplotlib>=3.7
   - tqdm>=4.65
   - soundfile>=0.12
+  - librosa=0.11.0
   - pip
   - pip:
       - auraloss
+      - aquatk==0.1.0
+      - mel-cepstral-distance==0.0.4

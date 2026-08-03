@@ -148,7 +148,7 @@ The main simulation logic is implemented by `utils.common.run_control_experiment
 2. Derive the desired response from the initial RIR: a pure delay or the paper's delay-plus-magnitude target with low-frequency roll-off and distance-dependent spectral decay.
 3. Instantiate the differentiable seven-biquad parametric EQ and output gain. The EQ architecture is fixed in the current implementation: one low shelf, five peaking filters, and one high shelf.
 4. Load a music signal or synthesize white noise, convert it to the RIR sampling rate, and divide it into frames.
-5. For each frame, update the true RIR, process the signal through the EQ and sound-system model, estimate the live linear echo model (LEM) by regularized frequency-domain deconvolution, evaluate the configured loss, backpropagate through the LEM estimate, and update the EQ parameters.
+5. For each frame, update the true RIR, process the signal through the EQ and sound-system model, estimate the live loudspeaker-enclosure-microphone (LEM) block by regularized frequency-domain deconvolution, evaluate the configured loss, backpropagate through the LEM estimate, and update the EQ parameters.
 6. Record the loss, validation error, timing, optional EQ checkpoints, final parameters, and input/desired/unprocessed/equalized audio.
 
 The validation curve is the paper's normalized relative system distance, `D_rel`: the L1 spectral distance from the equalized response to the desired response, normalized by the corresponding distance for the unprocessed room response. Thus, `D_rel = 1` represents no improvement over the room alone, values below 1 represent improvement, and 0 is a perfect match under this measure.
@@ -161,7 +161,7 @@ The configuration uses the historical `GHAM-J` identifiers for the methods named
 
 ### 1. Run the minimal example
 
-`example.py` is the fastest way to inspect one scalar configuration. It runs a single input and optimizer, prints the final validation error, and opens the validation and final-response plots. The optional live debug plot can also save the evolving response as a GIF. Unlike the experiment runners, it does not create a complete result bundle under `results/`.
+`example.py` is the fastest way to inspect one specific configuration. It runs a single input and optimizer, prints the final validation error, and opens the validation and final-response plots. The optional live debug plot can also save the evolving response as a GIF. Unlike the experiment runners, it does not create a complete result bundle under `results/`.
 
 ```bash
 python src/scripts/example.py --config configs/example_config.json
@@ -250,7 +250,7 @@ Every field in `main_experiment_config.json` is a list of candidate values unles
 | `loss_type` | `"FD-MSE"`, `"TD-MSE"`, `"FD-SE"`, or `"TD-SE"` | Frequency- or time-domain mean-squared error (`MSE`) or unreduced squared error (`SE`). The reported music experiments primarily use `"FD-MSE"`; the paper shows that time-domain objectives are less robust for nonstationary music. |
 | `optim_type` | List containing `"SGD"`, `"Adam"`, `"Newton"`, `"GHAM-1"`, `"GHAM-2"`, and/or `"GHAM-3"` | Optimizer used for each frame. `GHAM-J` is the configuration spelling of iHAM-J. `GHAM-4` is not an accepted runnable option: the code explicitly raises `NotImplementedError`. |
 | `mu_opt` | List of positive numbers, or object mapping each loss type to such a list | Per-optimizer update size. Each list must match `optim_type` in length and is paired positionally. A per-loss object such as `{"FD-MSE": [0.005, 0.05]}` allows different step sizes for different losses. |
-| `lambda_newton` | List, or object mapping loss types to one-element lists/scalars; non-negative | Diagonal Hessian regularization used by `"Newton"`. It is accepted for all runs but ignored by the other update rules. |
+| `lambda_newton` | List, or object mapping loss types to one-element lists/scalars; non-negative | Diagonal Hessian regularization used by `"Newton"`. It is accepted for all runs but ignored by the other optimizers. |
 | `eps_0` | List, or object mapping loss types to one-element lists/scalars; non-negative | Irreducible-error level in the GHAM/iHAM deformation equation. It affects `GHAM-1` through `GHAM-3` and is ignored by SGD, Adam, and Newton. |
 | `use_true_LEM` | List of booleans | If `false`, gradients use the online LEM estimate, matching the main experiments. If `true`, gradients use the ground-truth current RIR; this supports the LEM-estimation ablation. The physical forward path always uses the true simulated RIR. |
 | `n_checkpoints` | List of non-negative integers | Number of intermediate EQ-response snapshots. Initial and final snapshots are retained even when this is `0`; positive values add evenly spaced internal snapshots. |
@@ -269,7 +269,7 @@ For example, these entries run SGD with `mu = 0.005`, iHAM-1 with `mu = 0.05`, a
 | Field | Type and accepted values | Meaning |
 |---|---|---|
 | `use_white_noise` | Boolean | Add synthetic white-noise runs. |
-| `use_songs_folder` | Boolean | Add file-based runs discovered directly under `data/MedleyDB/`. Both input modes may be enabled together. Enable at least one mode. |
+| `use_songs_folder` | Boolean | Add file-based runs discovered directly under `data/MedleyDB/`. Both input modes (white noise or songs) may be enabled together. Enable at least one mode. |
 | `max_num_songs` | Positive integer or `null` | With songs, randomly select at most this many files; `null`, zero, or a value at least as large as the pool uses all files. With white noise, a positive value sets the number of independent realizations; `null` gives one. |
 | `max_audio_len_s` | One-element list containing a positive number, for example `[180.0]` | Maximum duration per input. The grid runners currently read the first list element only. A numeric duration is required for white noise and for positioning transitions in a time-varying scenario. |
 
@@ -352,7 +352,7 @@ The full runners create the following artifacts:
 | Path | Contents |
 |---|---|
 | `results/<experiment_name>/config.json` | Exact source configuration copied at the end of the run. |
-| `results/<experiment_name>/plot_data.pkl` | Serialized curve, transition, checkpoint, response, and timing data consumed by the plotting scripts. Only load pickle files from trusted sources. |
+| `results/<experiment_name>/plot_data.pkl` | Serialized curve, transition, checkpoint, response, and timing data consumed by the plotting scripts. |
 | `results/<experiment_name>/audio/input_<track>.wav` | Input signal; produced by the main runner. |
 | `results/<experiment_name>/audio/desired_<track>.wav` | Target-system output used as the metric reference. |
 | `results/<experiment_name>/audio/noEQ_<track>.wav` | Simulated room output without equalization. |
@@ -375,7 +375,6 @@ If this repository contributes to your research, please cite:
   author    = {Marcos-Mac{\'{i}}as, Fernando and Daza-Llin, Mar{\'{i}}a Pilar and C{\'{a}}mara, Mateo and Blanco, Jos{\'{e}} Luis},
   booktitle = {Proceedings of the 29th International Conference on Digital Audio Effects (DAFx-26)},
   address   = {Cambridge, MA, USA},
-  year      = {2026},
-  month     = sep
+  year      = {2026}
 }
 ```
