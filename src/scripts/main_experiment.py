@@ -114,7 +114,7 @@ def main(config_path: Path) -> None:
             run_seed = seed + int(info.get("seed_offset", 0)) if mode == "white_noise" and isinstance(info, dict) else seed
             set_seed(run_seed)
 
-            result = run_control_experiment(sim_cfg, input_spec)
+            result = run_control_experiment(sim_cfg, input_spec) # Run the adaptive EQ simulation for the given configuration and input signal!
             if result is None:
                 continue
 
