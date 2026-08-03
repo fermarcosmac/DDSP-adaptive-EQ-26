@@ -6,6 +6,7 @@ Code accompanying the DAFx-26 paper:
 > Fernando Marcos-Macías, María Pilar Daza-Llin, Mateo Cámara, and José Luis Blanco
 
 Please refer to the [accompanying webpage](https://fermarcosmac.github.io/DDSP-adaptive_EQ-26/) for further information on the theory behind the code.
+
 ---
 
 ## Overview
